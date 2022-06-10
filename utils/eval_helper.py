@@ -111,7 +111,7 @@ def degree_stats(graph_ref_list, graph_pred_list, is_parallel=True):
 
 def spectral_worker(G):
   # eigs = nx.laplacian_spectrum(G)
-  eigs = eigvalsh(nx.normalized_laplacian_matrix(G).todense())  
+  eigs = eigvalsh(nx.normalized_laplacian_matrix(nx.Graph(G)).todense())
   spectral_pmf, _ = np.histogram(eigs, bins=200, range=(-1e-5, 2), density=False)
   spectral_pmf = spectral_pmf / spectral_pmf.sum()
   # from scipy import stats  

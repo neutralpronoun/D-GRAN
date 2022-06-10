@@ -60,10 +60,14 @@ def compute_edge_ratio(G_list):
 def get_graph(adj):
   """ get a graph from zero-padded adj """
   # remove all zeros rows and columns
-  adj = adj[~np.all(adj == 0, axis=1)]
-  adj = adj[:, ~np.all(adj == 0, axis=0)]
+  #adj = adj[~np.all(adj == 0, axis=1)]
+  #adj = adj[:, ~np.all(adj == 0, axis=0)]
   adj = np.asmatrix(adj)
-  G = nx.from_numpy_matrix(adj)
+
+  # print(adj)
+  # print(num_above_diagonal(adj))
+
+  G = nx.from_numpy_matrix(adj, create_using= nx.DiGraph)
   return G
 
 
@@ -81,6 +85,36 @@ def evaluate(graph_gt, graph_pred, degree_only=True):
     
   return mmd_degree, mmd_clustering, mmd_4orbits, mmd_spectral
 
+
+def num_above_diagonal(A):
+  n_nodes = A.shape[0]
+  num = 0
+  for i in range(0,n_nodes):
+    for n in range(0,n_nodes):
+      if n > i:
+        if A[i,n] != 0:
+          num += 1
+  return num
+
+def num_below_diagonal(A):
+  n_nodes = A.shape[0]
+  num = 0
+  for i in range(0,n_nodes):
+    for n in range(0,n_nodes):
+      if n < i:
+        if A[i,n] != 0:
+          num += 1
+  return num
+
+def mutual_link(A):
+  n_nodes = A.shape[0]
+  num = 0
+  for i in range(0,n_nodes):
+    for n in range(0,n_nodes):
+      if n < i:
+        if A[i,n] != 0 and A[n,i]!= 0:
+          num += 1
+  return num
 
 class GranRunner(object):
 
@@ -314,7 +348,7 @@ class GranRunner(object):
       A_pred = []
       num_nodes_pred = []
       num_test_batch = int(np.ceil(self.num_test_gen / self.test_conf.batch_size))
-
+      print(f"Num test batch: {num_test_batch}")
       gen_run_time = []
       for ii in tqdm(range(num_test_batch)):
         with torch.no_grad():        
@@ -323,9 +357,16 @@ class GranRunner(object):
           input_dict['is_sampling']=True
           input_dict['batch_size']=self.test_conf.batch_size
           input_dict['num_nodes_pmf']=self.num_nodes_pmf_train
+          print(f"Running model")
           A_tmp = model(input_dict)
           gen_run_time += [time.time() - start_time]
           A_pred += [aa.data.cpu().numpy() for aa in A_tmp]
+          for aa in A_tmp:
+            print(f"\nAdjacency:\n{aa.data.cpu().numpy()}")
+            print(f"Num above diagnonal: {num_above_diagonal(aa.data.cpu().numpy())}")
+            print(f"Num below diagnonal: {num_below_diagonal(aa.data.cpu().numpy())}")
+            print(f"Num mutual         : {mutual_link(aa.data.cpu().numpy())}")
+
           num_nodes_pred += [aa.shape[0] for aa in A_tmp]
 
       logger.info('Average test time per mini-batch = {}'.format(
@@ -351,10 +392,9 @@ class GranRunner(object):
       # display the largest connected component for better visualization
       vis_graphs = []
       for gg in graphs_pred_vis:        
-        CGs = [gg.subgraph(c) for c in nx.connected_components(gg)]
-        CGs = sorted(CGs, key=lambda x: x.number_of_nodes(), reverse=True)
-        vis_graphs += [CGs[0]]
-
+        # CGs = [gg.subgraph(c) for c in nx.connected_components(gg)]
+        # CGs = sorted(CGs, key=lambda x: x.number_of_nodes(), reverse=True)
+        vis_graphs += [gg]#[CGs[0]]
       if self.is_single_plot:
         draw_graph_list(vis_graphs, num_row, num_col, fname=save_name, layout='spring')
       else:

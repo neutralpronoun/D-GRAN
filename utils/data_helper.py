@@ -91,7 +91,8 @@ def graph_load_batch(data_dir,
     :return: a list of graphs
     '''
   print('Loading graph dataset: ' + str(name))
-  G = nx.Graph()
+
+  G = nx.DiGraph()
   # load data
   path = os.path.join(data_dir, name)
   data_adj = np.loadtxt(
@@ -201,8 +202,8 @@ def create_graphs(graph_type, data_dir='data', noise=10.0, seed=1234):
   elif graph_type == "social":
     graphs = graph_load_batch(
         data_dir,
-        min_num_nodes=100,
-        max_num_nodes=402,
+        min_num_nodes=200,
+        max_num_nodes=201,
         name='social',
         node_attributes=False,
         graph_labels=True)

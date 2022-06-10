@@ -11,16 +11,16 @@ def draw_graph_list(G_list,
                     layout='spring',
                     is_single=False,
                     k=1,
-                    node_size=55,
+                    node_size=10,
                     alpha=1,
-                    width=1.3):
+                    width=0.2):
   plt.switch_backend('agg')
   for i, G in enumerate(G_list):
-    G = nx.Graph(G)
+    # G = nx.DiGraph(G)
 
-    for n in list(G.nodes()):
-        if len(list(G.edges(n))) == 0:
-            G.remove_node(n)
+    # for n in list(G.nodes()):
+    #     if len(list(G.edges(n))) == 0:
+    #         G.remove_node(n)
 
 
     plt.subplot(row, col, i + 1)
@@ -54,12 +54,12 @@ def draw_graph_list(G_list,
       nx.draw_networkx_nodes(
           G,
           pos,
-          node_size=1.5,
+          node_size=node_size,
           node_color='#336699',
           alpha=1,
           linewidths=0.2)#,
           # font_size=1.5)
-      nx.draw_networkx_edges(G, pos, alpha=0.3, width=0.2)
+      nx.draw_networkx_edges(G, pos, node_size=node_size, alpha=0.3, width=0.2, connectionstyle="arc3,rad=0.2", arrowsize=1)
 
   plt.tight_layout()
   plt.savefig(fname, dpi=300)

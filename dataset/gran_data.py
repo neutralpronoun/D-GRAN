@@ -48,6 +48,7 @@ class GRANData(object):
       self.config.dataset.save_path = self.save_path
       for index in tqdm(range(self.num_graphs)):
         G = self.graphs[index]
+
         data = self._get_graph_data(G)
         tmp_path = os.path.join(self.save_path, '{}_{}.p'.format(tag, index))
         pickle.dump(data, open(tmp_path, 'wb'))
@@ -73,7 +74,11 @@ class GRANData(object):
         nx.to_numpy_matrix(G, nodelist=[dd[0] for dd in degree_sequence]))
 
     ### BFS & DFS from largest-degree node
-    CGs = [G.subgraph(c) for c in nx.connected_components(G)]
+    # CGs = [G.subgraph(c) for c in nx.connected_components(G)]
+
+    graph_con = nx.Graph(G)
+    CGs = [G.subgraph(c) for c in nx.connected_components(graph_con)]
+
 
     # rank connected componets from large to small size
     CGs = sorted(CGs, key=lambda x: x.number_of_nodes(), reverse=True)
@@ -207,8 +212,8 @@ class GRANData(object):
               adj_full[:jj, :jj], ((0, K), (0, K)),
               'constant',
               constant_values=1.0)  # assuming fully connected for the new block
-          adj_block = np.tril(adj_block, k=-1)
-          adj_block = adj_block + adj_block.transpose()
+          # adj_block = np.tril(adj_block, k=-1)
+          # adj_block = adj_block + adj_block.transpose()
           adj_block = torch.from_numpy(adj_block).to_sparse()
           edges += [adj_block.coalesce().indices().long()]
 
@@ -264,7 +269,7 @@ class GRANData(object):
 
       ### pack tensors
       data = {}
-      data['adj'] = np.tril(np.stack(adj_list, axis=0), k=-1)
+      data['adj'] = np.stack(adj_list, axis=0)  #np.tril(np.stack(adj_list, axis=0), k=-1)
       data['edges'] = torch.cat(edges, dim=1).t().long()
       data['node_idx_gnn'] = np.concatenate(node_idx_gnn)
       data['node_idx_feat'] = np.concatenate(node_idx_feat)
